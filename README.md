@@ -4,8 +4,8 @@ Attempt at solving the Titanic ML challenge using Rust & rusty-machine.
 https://www.kaggle.com/c/titanic
 
 
-$ ./target/release/gaussian_accuracy; ./target/release/svm_accuracy; ./target/release/logistic_regression_accuracy; ./target/release/nnet_accuracy 
-2019-11-20 09:40:45,580 INFO  [gaussian_accuracy] accuracy: 0.7798507462686567
+$ ./target/release/gaussian_accuracy; ./target/release/svm_accuracy; ./target/release/logistic_regression_accuracy; ./target/release/nnet_accuracy
+\*2019-11-20 09:40:45,580 INFO  [gaussian_accuracy] accuracy: 0.7798507462686567\*
 2019-11-20 09:40:45,580 INFO  [gaussian_accuracy] Duration: 306ms 15us 483ns
 2019-11-20 09:40:46,209 INFO  [svm_accuracy] accuracy: 0.832089552238806
 2019-11-20 09:40:46,209 INFO  [svm_accuracy] Duration: 627ms 173us 138ns
