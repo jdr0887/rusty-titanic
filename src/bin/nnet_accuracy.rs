@@ -12,7 +12,8 @@ extern crate structopt;
 
 use humantime::format_duration;
 use log::Level;
-use rusty_machine::learning::nnet::{BCECriterion, NeuralNet};
+use rusty_machine::analysis::score::*;
+use rusty_machine::learning::nnet::{BCECriterion, MSECriterion, NeuralNet};
 use rusty_machine::learning::optim::grad_desc::StochasticGD;
 use rusty_machine::learning::toolkit::regularization::Regularization;
 use rusty_machine::learning::SupModel;
@@ -35,17 +36,22 @@ fn main() -> io::Result<()> {
     simple_logger::init_with_level(log_level).unwrap();
     debug!("{:?}", options);
 
+    debug!("reading training data");
     let raw_data = std::include_str!("../data/train.csv");
     let mut data_reader = csv::ReaderBuilder::new().has_headers(true).from_reader(raw_data.as_bytes());
-    let mut training_data: Vec<rusty_titanic::TitanicTrainingData> = Vec::new();
+    let mut all_data: Vec<rusty_titanic::TitanicTrainingData> = Vec::new();
     for record in data_reader.deserialize() {
         let record: rusty_titanic::TitanicTrainingData = record?;
-        training_data.push(record);
+        all_data.push(record);
     }
-    debug!("training_data.len(): {}", training_data.len());
 
+    let split_idx = (all_data.len() as f32 * 0.7) as usize;
+
+    let training_data_split = all_data.split_at_mut(split_idx);
+
+    let training_data = training_data_split.0.to_vec();
+    debug!("training_data.len(): {}", training_data.len());
     let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
-    let training_targets_matrix = linalg::Matrix::new(training_targets.data().len(), 1, training_targets);
 
     // let mut training_targets_inflated: Vec<f64> = Vec::new();
     //
@@ -58,31 +64,47 @@ fn main() -> io::Result<()> {
     //         training_targets_inflated.push(1f64)
     //     }
     // }
-    // let training_targets_matrix = linalg::Matrix::new(training_targets_inflated.len() / 2, 2, training_targets_inflated);
 
-    let test_data_raw = std::include_str!("../data/test.csv");
-    let mut test_data_reader = csv::ReaderBuilder::new().has_headers(true).from_reader(test_data_raw.as_bytes());
-    let mut tmp_test_data: Vec<rusty_titanic::TitanicTestData> = Vec::new();
-    for record in test_data_reader.deserialize() {
-        let record: rusty_titanic::TitanicTestData = record?;
-        tmp_test_data.push(record);
-    }
-    let test_data_matrix = rusty_titanic::parse_test_data(&tmp_test_data)?;
+    let training_targets_matrix = linalg::Matrix::new(training_targets.data().len(), 1, training_targets);
+
+    let test_data = training_data_split.1.to_vec();
+    debug!("test_data.len(): {}", test_data.len());
+    let (test_data_matrix, test_targets) = rusty_titanic::parse_training_data(&test_data)?;
+    debug!("test_targets: {:?}", test_targets);
+
+    // let mut test_targets_inflated: Vec<f64> = Vec::new();
+    //
+    // for entry in test_targets.data().iter() {
+    //     if entry == &1f64 {
+    //         test_targets_inflated.push(1f64);
+    //         test_targets_inflated.push(0f64)
+    //     } else {
+    //         test_targets_inflated.push(0f64);
+    //         test_targets_inflated.push(1f64)
+    //     }
+    // }
+    // let test_targets_matrix = linalg::Matrix::new(test_targets_inflated.len() / 2, 2, test_targets_inflated);
+
+    let test_targets_matrix = linalg::Matrix::new(test_targets.data().len(), 1, test_targets);
+    debug!("test_targets_matrix: {:?}", test_targets_matrix);
 
     let layers = &[7, 39, 1];
-    let criterion = BCECriterion::new(Regularization::L2(0.1));
+    let criterion = MSECriterion::new(Regularization::L2(0.1f64));
+    //let criterion = BCECriterion::new(Regularization::L2(0.1));
     let mut model = NeuralNet::new(layers, criterion, StochasticGD::default());
     model.train(&training_data_matrix, &training_targets_matrix).unwrap();
     let outputs = model.predict(&test_data_matrix).unwrap();
-    info!("outputs: {:?}", outputs);
+    debug!("outputs: {:?}", outputs);
 
     let mut rounded_outputs: Vec<f64> = Vec::new();
     for output in outputs.data().iter() {
         rounded_outputs.push(rusty_titanic::round(output.clone()));
     }
     debug!("rounded_outputs: {:?}", rounded_outputs);
-    // let rounded_outputs = outputs.apply(&round);
-    // debug!("rounded_outputs: {:?}", rounded_outputs);
+
+    let rounded_outputs_matrix = linalg::Matrix::new(rounded_outputs.len(), 1, rounded_outputs);
+    let row_acc = row_accuracy(&rounded_outputs_matrix, &test_targets_matrix);
+    info!("row_accuracy: {}", row_acc);
 
     info!("Duration: {}", format_duration(start.elapsed()).to_string());
     Ok(())

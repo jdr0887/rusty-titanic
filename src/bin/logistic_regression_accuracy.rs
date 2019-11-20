@@ -46,11 +46,11 @@ fn main() -> io::Result<()> {
 
     let training_data = training_data_split.0.to_vec();
     debug!("training_data.len(): {}", training_data.len());
-    let (training_targets, training_data_matrix) = rusty_titanic::parse_training_data(&training_data)?;
+    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
 
     let test_data = training_data_split.1.to_vec();
     debug!("test_data.len(): {}", test_data.len());
-    let (test_targets, test_data_matrix) = rusty_titanic::parse_training_data(&test_data)?;
+    let (test_data_matrix, test_targets) = rusty_titanic::parse_training_data(&test_data)?;
     debug!("test_targets: {:?}", test_targets);
 
     let gradient_desc = GradientDesc::new(0.01, 4000);

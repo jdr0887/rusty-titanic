@@ -37,9 +37,9 @@ fn main() -> io::Result<()> {
         let record: rusty_titanic::TitanicTrainingData = record?;
         training_data.push(record);
     }
-    debug!("training_data.len(): {}", training_data.len());
-
-    let (training_targets, training_data_matrix) = rusty_titanic::parse_training_data(&training_data)?;
+    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
+    debug!("training_data_matrix: {:?}", training_data_matrix);
+    debug!("training_targets: {:?}", training_targets);
 
     debug!("reading test data");
     let test_data_raw = std::include_str!("../data/test.csv");
@@ -49,9 +49,8 @@ fn main() -> io::Result<()> {
         let record: rusty_titanic::TitanicTestData = record?;
         test_data.push(record);
     }
-    debug!("test_data.len(): {}", test_data.len());
-
     let test_data_matrix = rusty_titanic::parse_test_data(&test_data)?;
+    debug!("test_data_matrix: {:?}", test_data_matrix);
 
     let gradient_desc = GradientDesc::new(0.01, 4000);
     let mut model = learning::logistic_reg::LogisticRegressor::new(gradient_desc);

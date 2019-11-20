@@ -217,7 +217,7 @@ lazy_static! {
     };
 }
 
-pub fn parse_training_data(raw_training_data: &Vec<TitanicTrainingData>) -> io::Result<(linalg::Vector<f64>, rusty_machine::prelude::Matrix<f64>)> {
+pub fn parse_training_data(raw_training_data: &Vec<TitanicTrainingData>) -> io::Result<(rusty_machine::prelude::Matrix<f64>, linalg::Vector<f64>)> {
     let missing_age_count = raw_training_data.iter().filter(|x| x.age.is_none()).count();
     let age_sum: f64 = raw_training_data.iter().filter(|x| x.age.is_some()).map(|x| x.age.unwrap() as f64).sum();
     let age_mean = age_sum / ((raw_training_data.len() - missing_age_count) as f64);
@@ -346,7 +346,7 @@ pub fn parse_training_data(raw_training_data: &Vec<TitanicTrainingData>) -> io::
     let training_data_transformed = transformer.transform(training_data_matrix).unwrap();
     let training_targets = linalg::Vector::new(training_data_targets);
 
-    Ok((training_targets, training_data_transformed))
+    Ok((training_data_transformed, training_targets))
 }
 
 pub fn parse_test_data(raw_test_data: &Vec<TitanicTestData>) -> io::Result<rusty_machine::prelude::Matrix<f64>> {
@@ -491,4 +491,12 @@ pub fn parse_test_data(raw_test_data: &Vec<TitanicTestData>) -> io::Result<rusty
     let test_data_transformed = transformer.transform(test_data_matrix).unwrap();
 
     Ok(test_data_transformed)
+}
+
+pub fn round(a: f64) -> f64 {
+    if a > 0.5 {
+        1.0f64
+    } else {
+        0f64
+    }
 }

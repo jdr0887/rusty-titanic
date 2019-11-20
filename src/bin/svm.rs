@@ -39,10 +39,10 @@ fn main() -> io::Result<()> {
         let record: rusty_titanic::TitanicTrainingData = record?;
         training_data.push(record);
     }
-    debug!("training_data.len(): {}", training_data.len());
-
-    let (training_targets, training_data_matrix) = rusty_titanic::parse_training_data(&training_data)?;
+    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
+    debug!("training_data_matrix: {:?}", training_data_matrix);
     let fixed_training_targets = training_targets.apply(&fix);
+    debug!("fixed_training_targets: {:?}", fixed_training_targets);
 
     let raw_test_data = std::include_str!("../data/test.csv");
     let mut test_data_reader = csv::ReaderBuilder::new().has_headers(true).from_reader(raw_test_data.as_bytes());
@@ -51,9 +51,8 @@ fn main() -> io::Result<()> {
         let record: rusty_titanic::TitanicTestData = record?;
         test_data.push(record);
     }
-    debug!("test_data.len(): {}", training_data.len());
-
     let test_data_matrix = rusty_titanic::parse_test_data(&test_data)?;
+    debug!("test_data_matrix: {:?}", test_data_matrix);
 
     let mut svm_mod = SVM::default();
     svm_mod.optim_iters = 10000;
