@@ -178,9 +178,13 @@ impl TitanicTestData {
 }
 
 lazy_static! {
-    pub static ref COMMON_HONORIFICS: Vec<&'static str> = {
+    pub static ref CHILDREN_HONORIFICS: Vec<&'static str> = {
         let mut ret: Vec<_> = Vec::new();
         ret.push("Master.");
+        ret
+    };
+    pub static ref COMMON_HONORIFICS: Vec<&'static str> = {
+        let mut ret: Vec<_> = Vec::new();
         ret.push("Mr.");
         ret.push("Mrs.");
         ret.push("Miss.");
@@ -256,30 +260,35 @@ pub fn parse_training_data(raw_training_data: &Vec<TitanicTrainingData>) -> io::
         //info!("{} {} {}", honorific, first_name.trim(), last_name);
         // leave name out????
 
-        // match COMMON_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_training_data.push(1f64),
-        //     _ => tmp_training_data.push(0f64),
-        // }
-        //
-        // match MILITARY_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_training_data.push(1f64),
-        //     _ => tmp_training_data.push(0f64),
-        // }
-        //
-        // match FORMAL_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_training_data.push(1f64),
-        //     _ => tmp_training_data.push(0f64),
-        // }
-        //
-        // match ACADEMIC_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_training_data.push(1f64),
-        //     _ => tmp_training_data.push(0f64),
-        // }
-        //
-        // match RELIGIOUS_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_training_data.push(1f64),
-        //     _ => tmp_training_data.push(0f64),
-        // }
+        match CHILDREN_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_training_data.push(1f64),
+            _ => tmp_training_data.push(0f64),
+        }
+
+        match COMMON_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_training_data.push(1f64),
+            _ => tmp_training_data.push(0f64),
+        }
+
+        match MILITARY_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_training_data.push(1f64),
+            _ => tmp_training_data.push(0f64),
+        }
+
+        match FORMAL_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_training_data.push(1f64),
+            _ => tmp_training_data.push(0f64),
+        }
+
+        match ACADEMIC_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_training_data.push(1f64),
+            _ => tmp_training_data.push(0f64),
+        }
+
+        match RELIGIOUS_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_training_data.push(1f64),
+            _ => tmp_training_data.push(0f64),
+        }
 
         match record.sex.clone().as_str() {
             "male" => tmp_training_data.push(1f64),
@@ -340,7 +349,7 @@ pub fn parse_training_data(raw_training_data: &Vec<TitanicTrainingData>) -> io::
         training_data.append(&mut tmp_training_data);
     }
 
-    let training_data_matrix = linalg::Matrix::new(training_data.len() / 7, 7, training_data);
+    let training_data_matrix = linalg::Matrix::new(training_data.len() / 13, 13, training_data);
     //info!("training_data_matrix: {:?}", training_data_matrix);
     let mut transformer = Standardizer::default();
     let training_data_transformed = transformer.transform(training_data_matrix).unwrap();
@@ -398,30 +407,35 @@ pub fn parse_test_data(raw_test_data: &Vec<TitanicTestData>) -> io::Result<rusty
         //info!("{} {} {}", honorific, first_name.trim(), last_name);
         // leave name out????
 
-        // match COMMON_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_test_data.push(1f64),
-        //     _ => tmp_test_data.push(0f64),
-        // }
-        //
-        // match MILITARY_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_test_data.push(1f64),
-        //     _ => tmp_test_data.push(0f64),
-        // }
-        //
-        // match FORMAL_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_test_data.push(1f64),
-        //     _ => tmp_test_data.push(0f64),
-        // }
-        //
-        // match ACADEMIC_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_test_data.push(1f64),
-        //     _ => tmp_test_data.push(0f64),
-        // }
-        //
-        // match RELIGIOUS_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
-        //     true => tmp_test_data.push(1f64),
-        //     _ => tmp_test_data.push(0f64),
-        // }
+        match CHILDREN_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_test_data.push(1f64),
+            _ => tmp_test_data.push(0f64),
+        }
+
+        match COMMON_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_test_data.push(1f64),
+            _ => tmp_test_data.push(0f64),
+        }
+
+        match MILITARY_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_test_data.push(1f64),
+            _ => tmp_test_data.push(0f64),
+        }
+
+        match FORMAL_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_test_data.push(1f64),
+            _ => tmp_test_data.push(0f64),
+        }
+
+        match ACADEMIC_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_test_data.push(1f64),
+            _ => tmp_test_data.push(0f64),
+        }
+
+        match RELIGIOUS_HONORIFICS.par_iter().any(|x| name.contains(&x.to_string())) {
+            true => tmp_test_data.push(1f64),
+            _ => tmp_test_data.push(0f64),
+        }
 
         match record.sex.clone().as_str() {
             "male" => tmp_test_data.push(1f64),
@@ -486,7 +500,7 @@ pub fn parse_test_data(raw_test_data: &Vec<TitanicTestData>) -> io::Result<rusty
         test_data.append(&mut tmp_test_data);
     }
 
-    let test_data_matrix = linalg::Matrix::new(test_data.len() / 7, 7, test_data);
+    let test_data_matrix = linalg::Matrix::new(test_data.len() / 13, 13, test_data);
     let mut transformer = Standardizer::default();
     let test_data_transformed = transformer.transform(test_data_matrix).unwrap();
 

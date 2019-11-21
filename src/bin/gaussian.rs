@@ -54,10 +54,10 @@ fn main() -> io::Result<()> {
     let (test_data_matrix, test_targets) = rusty_titanic::parse_training_data(&test_data)?;
     debug!("test_targets: {:?}", test_targets);
 
-    let mut gaussp = gp::GaussianProcess::default();
-    gaussp.noise = 1f64;
-    gaussp.train(&training_data_matrix, &training_targets).unwrap();
-    let outputs = gaussp.predict(&test_data_matrix).unwrap();
+    let mut model = gp::GaussianProcess::default();
+    model.noise = 1f64;
+    model.train(&training_data_matrix, &training_targets).unwrap();
+    let outputs = model.predict(&test_data_matrix).unwrap();
     debug!("outputs: {:?}", outputs);
 
     let rounded_outputs = outputs.apply(&round);

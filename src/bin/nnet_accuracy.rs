@@ -53,18 +53,6 @@ fn main() -> io::Result<()> {
     debug!("training_data.len(): {}", training_data.len());
     let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
 
-    // let mut training_targets_inflated: Vec<f64> = Vec::new();
-    //
-    // for entry in training_targets.data().iter() {
-    //     if entry == &1f64 {
-    //         training_targets_inflated.push(1f64);
-    //         training_targets_inflated.push(0f64)
-    //     } else {
-    //         training_targets_inflated.push(0f64);
-    //         training_targets_inflated.push(1f64)
-    //     }
-    // }
-
     let training_targets_matrix = linalg::Matrix::new(training_targets.data().len(), 1, training_targets);
 
     let test_data = training_data_split.1.to_vec();
@@ -72,25 +60,12 @@ fn main() -> io::Result<()> {
     let (test_data_matrix, test_targets) = rusty_titanic::parse_training_data(&test_data)?;
     debug!("test_targets: {:?}", test_targets);
 
-    // let mut test_targets_inflated: Vec<f64> = Vec::new();
-    //
-    // for entry in test_targets.data().iter() {
-    //     if entry == &1f64 {
-    //         test_targets_inflated.push(1f64);
-    //         test_targets_inflated.push(0f64)
-    //     } else {
-    //         test_targets_inflated.push(0f64);
-    //         test_targets_inflated.push(1f64)
-    //     }
-    // }
-    // let test_targets_matrix = linalg::Matrix::new(test_targets_inflated.len() / 2, 2, test_targets_inflated);
-
     let test_targets_matrix = linalg::Matrix::new(test_targets.data().len(), 1, test_targets);
     debug!("test_targets_matrix: {:?}", test_targets_matrix);
 
-    let layers = &[7, 39, 1];
-    let criterion = MSECriterion::new(Regularization::L2(0.1f64));
-    //let criterion = BCECriterion::new(Regularization::L2(0.1));
+    let layers = &[13, 121, 1];
+    //let criterion = MSECriterion::new(Regularization::L2(0.3f64));
+    let criterion = BCECriterion::new(Regularization::L2(0.1));
     let mut model = NeuralNet::new(layers, criterion, StochasticGD::default());
     model.train(&training_data_matrix, &training_targets_matrix).unwrap();
     let outputs = model.predict(&test_data_matrix).unwrap();

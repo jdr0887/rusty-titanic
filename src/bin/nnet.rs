@@ -69,7 +69,7 @@ fn main() -> io::Result<()> {
     }
     let test_data_matrix = rusty_titanic::parse_test_data(&tmp_test_data)?;
 
-    let layers = &[7, 39, 1];
+    let layers = &[13, 121, 1];
     let criterion = BCECriterion::new(Regularization::L2(0.1));
     let mut model = NeuralNet::new(layers, criterion, StochasticGD::default());
     model.train(&training_data_matrix, &training_targets_matrix).unwrap();
