@@ -1,7 +1,7 @@
 # rusty-titanic
 Attempt at solving the Titanic ML challenge using Rust & rusty-machine.
 
- - [Kaggle](https://www.kaggle.com/c/titanic)
+ - [Kaggle Titanic](https://www.kaggle.com/c/titanic)
  - [rusty-machine](https://github.com/AtheMathmo/rusty-machine)
 
 ```
