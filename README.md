@@ -1,7 +1,9 @@
 # rusty-titanic
 Attempt at solving the Titanic ML challenge using Rust & rusty-machine.
 
-https://www.kaggle.com/c/titanic
+ - [Kaggle](https://www.kaggle.com/c/titanic)
+ - [rusty-machine](https://github.com/AtheMathmo/rusty-machine)
+
 ```
 $ ./target/release/gaussian_accuracy
 2019-11-20 09:50:18,844 INFO  [gaussian_accuracy] accuracy: 0.7798507462686567
