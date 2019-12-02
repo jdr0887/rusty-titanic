@@ -5,6 +5,7 @@ extern crate humantime;
 extern crate itertools;
 extern crate rayon;
 extern crate regex;
+extern crate rulinalg;
 extern crate rustlearn;
 extern crate rusty_machine;
 extern crate serde_derive;
@@ -12,9 +13,9 @@ extern crate structopt;
 
 use humantime::format_duration;
 use log::Level;
-use rusty_machine::analysis::score::*;
-use rusty_machine::learning::nnet::{BCECriterion, MSECriterion, NeuralNet};
-use rusty_machine::learning::optim::grad_desc::StochasticGD;
+use rusty_machine::analysis::cross_validation::k_fold_validate;
+use rusty_machine::learning::nnet::{BCECriterion, NeuralNet};
+use rusty_machine::learning::optim::grad_desc::*;
 use rusty_machine::learning::toolkit::regularization::Regularization;
 use rusty_machine::learning::SupModel;
 use rusty_machine::linalg;
@@ -50,36 +51,57 @@ fn main() -> io::Result<()> {
     let training_data_split = all_data.split_at_mut(split_idx);
 
     let training_data = training_data_split.0.to_vec();
-    debug!("training_data.len(): {}", training_data.len());
-    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
-
+    let (training_data_matrix, training_targets, training_feature_size) = rusty_titanic::parse_training_data(&training_data)?;
+    debug!("training_targets: {:?}", training_targets);
     let training_targets_matrix = linalg::Matrix::new(training_targets.data().len(), 1, training_targets);
 
-    let test_data = training_data_split.1.to_vec();
-    debug!("test_data.len(): {}", test_data.len());
-    let (test_data_matrix, test_targets) = rusty_titanic::parse_training_data(&test_data)?;
-    debug!("test_targets: {:?}", test_targets);
+    //let mut model = NeuralNet::new(&[13, 121, 1], criterion, StochasticGD::default());
 
-    let test_targets_matrix = linalg::Matrix::new(test_targets.data().len(), 1, test_targets);
-    debug!("test_targets_matrix: {:?}", test_targets_matrix);
+    let mut layers: Vec<Vec<usize>> = Vec::new();
 
-    let layers = &[13, 121, 1];
-    //let criterion = MSECriterion::new(Regularization::L2(0.3f64));
-    let criterion = BCECriterion::new(Regularization::L2(0.1));
-    let mut model = NeuralNet::new(layers, criterion, StochasticGD::default());
-    model.train(&training_data_matrix, &training_targets_matrix).unwrap();
-    let outputs = model.predict(&test_data_matrix).unwrap();
-    debug!("outputs: {:?}", outputs);
+    let mut no_hidden_layers = vec![vec![training_feature_size, 1]];
 
-    let mut rounded_outputs: Vec<f64> = Vec::new();
-    for output in outputs.data().iter() {
-        rounded_outputs.push(rusty_titanic::round(output.clone()));
+    let mut one_hidden_layers = vec![
+        vec![training_feature_size, training_feature_size * 4, 1],
+        vec![training_feature_size, training_feature_size * 8, 1],
+        vec![training_feature_size, training_feature_size * 12, 1],
+    ];
+
+    let mut two_hidden_layers = vec![
+        vec![training_feature_size, training_feature_size * 6, training_feature_size * 3, 1],
+        vec![training_feature_size, training_feature_size * 10, training_feature_size * 5, 1],
+    ];
+
+    let mut three_hidden_layers = vec![vec![
+        training_feature_size,
+        training_feature_size * 12,
+        training_feature_size * 8,
+        training_feature_size * 4,
+        1,
+    ]];
+
+    layers.append(&mut no_hidden_layers);
+    layers.append(&mut one_hidden_layers);
+    layers.append(&mut two_hidden_layers);
+    layers.append(&mut three_hidden_layers);
+
+    for layer in layers.iter() {
+        //let mut model = NeuralNet::new(layer.as_ref(), BCECriterion::new(Regularization::L2(0.01)), StochasticGD::default());
+        //let mut model = NeuralNet::new(layer.as_ref(), BCECriterion::new(Regularization::L1(0.05)), StochasticGD::default());
+        let mut model = NeuralNet::new(layer.as_ref(), BCECriterion::default(), StochasticGD::default());
+        let accuracy_per_fold: Vec<f64> = k_fold_validate(
+            &mut model,
+            &training_data_matrix,
+            &training_targets_matrix,
+            10,
+            rusty_titanic::rounded_row_accuracy,
+        )
+        .unwrap();
+        let accuracy_per_fold_sum: f64 = accuracy_per_fold.iter().sum();
+        let accuracy_per_fold_mean = accuracy_per_fold_sum / accuracy_per_fold.len() as f64;
+        debug!("accuracy_per_fold: {:?}", accuracy_per_fold);
+        info!("layer: {:?}, accuracy_per_fold_mean: {:?}", layer, accuracy_per_fold_mean);
     }
-    debug!("rounded_outputs: {:?}", rounded_outputs);
-
-    let rounded_outputs_matrix = linalg::Matrix::new(rounded_outputs.len(), 1, rounded_outputs);
-    let row_acc = row_accuracy(&rounded_outputs_matrix, &test_targets_matrix);
-    info!("row_accuracy: {}", row_acc);
 
     info!("Duration: {}", format_duration(start.elapsed()).to_string());
     Ok(())

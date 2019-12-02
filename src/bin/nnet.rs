@@ -12,6 +12,7 @@ extern crate structopt;
 
 use humantime::format_duration;
 use log::Level;
+use rusty_machine::analysis::cross_validation::k_fold_validate;
 use rusty_machine::learning::nnet::{BCECriterion, NeuralNet};
 use rusty_machine::learning::optim::grad_desc::StochasticGD;
 use rusty_machine::learning::toolkit::regularization::Regularization;
@@ -44,21 +45,8 @@ fn main() -> io::Result<()> {
     }
     debug!("training_data.len(): {}", training_data.len());
 
-    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
+    let (training_data_matrix, training_targets, training_feature_size) = rusty_titanic::parse_training_data(&training_data)?;
     let training_targets_matrix = linalg::Matrix::new(training_targets.data().len(), 1, training_targets);
-
-    // let mut training_targets_inflated: Vec<f64> = Vec::new();
-    //
-    // for entry in training_targets.data().iter() {
-    //     if entry == &1f64 {
-    //         training_targets_inflated.push(1f64);
-    //         training_targets_inflated.push(0f64)
-    //     } else {
-    //         training_targets_inflated.push(0f64);
-    //         training_targets_inflated.push(1f64)
-    //     }
-    // }
-    // let training_targets_matrix = linalg::Matrix::new(training_targets_inflated.len() / 2, 2, training_targets_inflated);
 
     let test_data_raw = std::include_str!("../data/test.csv");
     let mut test_data_reader = csv::ReaderBuilder::new().has_headers(true).from_reader(test_data_raw.as_bytes());
@@ -67,22 +55,21 @@ fn main() -> io::Result<()> {
         let record: rusty_titanic::TitanicTestData = record?;
         tmp_test_data.push(record);
     }
-    let test_data_matrix = rusty_titanic::parse_test_data(&tmp_test_data)?;
 
-    let layers = &[13, 121, 1];
-    let criterion = BCECriterion::new(Regularization::L2(0.1));
-    let mut model = NeuralNet::new(layers, criterion, StochasticGD::default());
-    model.train(&training_data_matrix, &training_targets_matrix).unwrap();
-    let outputs = model.predict(&test_data_matrix).unwrap();
-    info!("outputs: {:?}", outputs);
-
-    let mut rounded_outputs: Vec<f64> = Vec::new();
-    for output in outputs.data().iter() {
-        rounded_outputs.push(rusty_titanic::round(output.clone()));
-    }
-    debug!("rounded_outputs: {:?}", rounded_outputs);
-    // let rounded_outputs = outputs.apply(&round);
-    // debug!("rounded_outputs: {:?}", rounded_outputs);
+    let criterion = BCECriterion::new(Regularization::L2(0.1f64));
+    //let mut model = NeuralNet::new(&[13, 121, 1], criterion, StochasticGD::default());
+    let experimental_layers = vec![vec![training_feature_size, training_feature_size , 1]];
+    let layers = vec![training_feature_size, 121, 1];
+    let mut model = NeuralNet::new(layers.as_ref(), criterion, StochasticGD::default());
+    let accuracy_per_fold: Vec<f64> = k_fold_validate(
+        &mut model,
+        &training_data_matrix,
+        &training_targets_matrix,
+        10,
+        rusty_titanic::rounded_row_accuracy,
+    )
+    .unwrap();
+    info!("accuracy_per_fold: {:?}", accuracy_per_fold);
 
     info!("Duration: {}", format_duration(start.elapsed()).to_string());
     Ok(())
