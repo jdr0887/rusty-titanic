@@ -47,11 +47,11 @@ fn main() -> io::Result<()> {
 
     let training_data = training_data_split.0.to_vec();
     debug!("training_data.len(): {}", training_data.len());
-    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
+    let (training_data_matrix, training_targets, _) = rusty_titanic::parse_training_data(&training_data)?;
 
     let test_data = training_data_split.1.to_vec();
     debug!("test_data.len(): {}", test_data.len());
-    let (test_data_matrix, test_targets) = rusty_titanic::parse_training_data(&test_data)?;
+    let (test_data_matrix, test_targets, _) = rusty_titanic::parse_training_data(&test_data)?;
     debug!("test_targets: {:?}", test_targets);
 
     let mut model = gp::GaussianProcess::default();
@@ -60,19 +60,11 @@ fn main() -> io::Result<()> {
     let outputs = model.predict(&test_data_matrix).unwrap();
     debug!("outputs: {:?}", outputs);
 
-    let rounded_outputs = outputs.apply(&round);
+    let rounded_outputs = outputs.apply(&libm::round);
     debug!("rounded_outputs: {:?}", rounded_outputs);
     let acc = accuracy(rounded_outputs.iter(), test_targets.iter());
     info!("accuracy: {}", acc);
 
     info!("Duration: {}", format_duration(start.elapsed()).to_string());
     Ok(())
-}
-
-fn round(a: f64) -> f64 {
-    if a > 0.5 {
-        1.0f64
-    } else {
-        0f64
-    }
 }
