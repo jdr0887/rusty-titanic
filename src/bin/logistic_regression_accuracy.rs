@@ -46,14 +46,14 @@ fn main() -> io::Result<()> {
 
     let training_data = training_data_split.0.to_vec();
     debug!("training_data.len(): {}", training_data.len());
-    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
+    let (training_data_matrix, training_targets, _) = rusty_titanic::parse_training_data(&training_data)?;
 
     let test_data = training_data_split.1.to_vec();
     debug!("test_data.len(): {}", test_data.len());
-    let (test_data_matrix, test_targets) = rusty_titanic::parse_training_data(&test_data)?;
+    let (test_data_matrix, test_targets, _) = rusty_titanic::parse_training_data(&test_data)?;
     debug!("test_targets: {:?}", test_targets);
 
-    let gradient_desc = GradientDesc::new(0.01, 4000);
+    let gradient_desc = GradientDesc::new(0.1, 400);
     let mut model = learning::logistic_reg::LogisticRegressor::new(gradient_desc);
     model.train(&training_data_matrix, &training_targets).unwrap();
     let outputs = model.predict(&test_data_matrix).unwrap();
