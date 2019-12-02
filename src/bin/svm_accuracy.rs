@@ -12,7 +12,7 @@ extern crate structopt;
 
 use humantime::format_duration;
 use log::Level;
-use rusty_machine::analysis::score::*;
+use rusty_machine::analysis::score::accuracy;
 use rusty_machine::learning::svm::SVM;
 use rusty_machine::learning::SupModel;
 use std::io;
@@ -48,19 +48,20 @@ fn main() -> io::Result<()> {
 
     let training_data = training_data_split.0.to_vec();
     debug!("training_data.len(): {}", training_data.len());
-    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
+    let (training_data_matrix, training_targets, training_feature_size) = rusty_titanic::parse_training_data(&training_data)?;
+    debug!("training_feature_size: {}", training_feature_size);
     let fixed_training_targets = training_targets.apply(&fix);
 
     let test_data = training_data_split.1.to_vec();
     debug!("test_data.len(): {}", test_data.len());
-    let (test_data_matrix, test_targets) = rusty_titanic::parse_training_data(&test_data)?;
+    let (test_data_matrix, test_targets, _) = rusty_titanic::parse_training_data(&test_data)?;
     let fixed_test_targets = test_targets.apply(&fix);
     debug!("fixed_test_targets: {:?}", fixed_test_targets);
 
-    let mut svm_mod = SVM::default();
-    svm_mod.optim_iters = 10000;
-    svm_mod.train(&training_data_matrix, &fixed_training_targets).unwrap();
-    let outputs = svm_mod.predict(&test_data_matrix).unwrap();
+    let mut model = SVM::default();
+    model.optim_iters = 10000;
+    model.train(&training_data_matrix, &fixed_training_targets).unwrap();
+    let outputs = model.predict(&test_data_matrix).unwrap();
     debug!("outputs: {:?}", outputs);
 
     let acc = accuracy(outputs.iter(), fixed_test_targets.iter());

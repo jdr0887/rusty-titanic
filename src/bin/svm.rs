@@ -39,7 +39,7 @@ fn main() -> io::Result<()> {
         let record: rusty_titanic::TitanicTrainingData = record?;
         training_data.push(record);
     }
-    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
+    let (training_data_matrix, training_targets, _) = rusty_titanic::parse_training_data(&training_data)?;
     debug!("training_data_matrix: {:?}", training_data_matrix);
     let fixed_training_targets = training_targets.apply(&fix);
     debug!("fixed_training_targets: {:?}", fixed_training_targets);
@@ -51,13 +51,13 @@ fn main() -> io::Result<()> {
         let record: rusty_titanic::TitanicTestData = record?;
         test_data.push(record);
     }
-    let test_data_matrix = rusty_titanic::parse_test_data(&test_data)?;
+    let (test_data_matrix, _) = rusty_titanic::parse_test_data(&test_data)?;
     debug!("test_data_matrix: {:?}", test_data_matrix);
 
-    let mut svm_mod = SVM::default();
-    svm_mod.optim_iters = 10000;
-    svm_mod.train(&training_data_matrix, &fixed_training_targets).unwrap();
-    let outputs = svm_mod.predict(&test_data_matrix).unwrap();
+    let mut model = SVM::default();
+    model.optim_iters = 10000;
+    model.train(&training_data_matrix, &fixed_training_targets).unwrap();
+    let outputs = model.predict(&test_data_matrix).unwrap();
     info!("outputs: {:?}", outputs);
 
     info!("Duration: {}", format_duration(start.elapsed()).to_string());
