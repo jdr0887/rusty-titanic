@@ -33,26 +33,27 @@ fn main() -> io::Result<()> {
     debug!("{:?}", options);
 
     debug!("reading training data");
-    let raw_data = std::include_str!("../data/train.csv");
-    let mut data_reader = csv::ReaderBuilder::new().has_headers(true).from_reader(raw_data.as_bytes());
-    let mut all_data: Vec<rusty_titanic::TitanicTrainingData> = Vec::new();
-    for record in data_reader.deserialize() {
+    let raw_training_data = std::include_str!("../data/train.csv");
+    let mut training_data_reader = csv::ReaderBuilder::new().has_headers(true).from_reader(raw_training_data.as_bytes());
+    let mut training_data: Vec<rusty_titanic::TitanicTrainingData> = Vec::new();
+    for record in training_data_reader.deserialize() {
         let record: rusty_titanic::TitanicTrainingData = record?;
-        all_data.push(record);
+        training_data.push(record);
     }
+    let (training_data_matrix, training_targets, _) = rusty_titanic::parse_training_data(&training_data)?;
+    debug!("training_data_matrix: {:?}", training_data_matrix);
+    debug!("training_targets: {:?}", training_targets);
 
-    let split_idx = (all_data.len() as f32 * 0.7) as usize;
-
-    let training_data_split = all_data.split_at_mut(split_idx);
-
-    let training_data = training_data_split.0.to_vec();
-    debug!("training_data.len(): {}", training_data.len());
-    let (training_data_matrix, training_targets) = rusty_titanic::parse_training_data(&training_data)?;
-
-    let test_data = training_data_split.1.to_vec();
-    debug!("test_data.len(): {}", test_data.len());
-    let (test_data_matrix, test_targets) = rusty_titanic::parse_training_data(&test_data)?;
-    debug!("test_targets: {:?}", test_targets);
+    debug!("reading test data");
+    let test_data_raw = std::include_str!("../data/test.csv");
+    let mut test_data_reader = csv::ReaderBuilder::new().has_headers(true).from_reader(test_data_raw.as_bytes());
+    let mut test_data: Vec<rusty_titanic::TitanicTestData> = Vec::new();
+    for record in test_data_reader.deserialize() {
+        let record: rusty_titanic::TitanicTestData = record?;
+        test_data.push(record);
+    }
+    let (test_data_matrix, _) = rusty_titanic::parse_test_data(&test_data)?;
+    debug!("test_data_matrix: {:?}", test_data_matrix);
 
     let mut model = gp::GaussianProcess::default();
     model.noise = 1f64;
@@ -60,19 +61,9 @@ fn main() -> io::Result<()> {
     let outputs = model.predict(&test_data_matrix).unwrap();
     debug!("outputs: {:?}", outputs);
 
-    let rounded_outputs = outputs.apply(&round);
-    debug!("rounded_outputs: {:?}", rounded_outputs);
-    let acc = accuracy(rounded_outputs.iter(), test_targets.iter());
-    info!("accuracy: {}", acc);
+    let rounded_outputs = outputs.apply(&libm::round);
+    info!("rounded_outputs: {:?}", rounded_outputs);
 
     info!("Duration: {}", format_duration(start.elapsed()).to_string());
     Ok(())
-}
-
-fn round(a: f64) -> f64 {
-    if a > 0.5 {
-        1.0f64
-    } else {
-        0f64
-    }
 }
